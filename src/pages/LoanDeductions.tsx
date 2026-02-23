@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { mockApprovedDeductions, LoanDeduction } from "@/data/loanData";
-import { ArrowLeft, Minus, DollarSign } from "lucide-react";
+import { ArrowLeft, Minus, DollarSign, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,34 +13,74 @@ const LoanDeductions = () => {
   const [deductions, setDeductions] = useState<LoanDeduction[]>(mockApprovedDeductions);
   const [expandedLoan, setExpandedLoan] = useState<number | null>(null);
 
-  const handleDecreaseMonth = (loanId: number) => {
+  const handleDeductMonth = (loanId: number) => {
     setDeductions((prev) =>
       prev.map((d) => {
-        if (d.loanId !== loanId || d.remainingMonths <= 1) return d;
-        const newRemaining = d.remainingMonths - 1;
-        const newMonthly = Math.ceil(d.remainingAmount / newRemaining);
-        // Rebuild schedule: keep paid months, adjust remaining
-        const paidSchedule = d.schedule.filter((s) => s.status === "PAID");
-        const pendingSchedule = [];
-        for (let i = 0; i < newRemaining; i++) {
-          const date = new Date();
-          date.setMonth(date.getMonth() + i);
-          const monthStr = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-          pendingSchedule.push({
-            month: monthStr,
-            amount: i === newRemaining - 1 ? d.remainingAmount - newMonthly * (newRemaining - 1) : newMonthly,
-            status: i === 0 ? "PENDING" as const : "UPCOMING" as const,
-          });
-        }
+        if (d.loanId !== loanId) return d;
+        // Find the first PENDING month and mark it as PAID
+        const pendingIndex = d.schedule.findIndex((s) => s.status === "PENDING");
+        if (pendingIndex === -1) return d;
+
+        const deductionAmount = d.schedule[pendingIndex].amount;
+        const newRemainingAmount = d.remainingAmount - deductionAmount;
+        const newPaidMonths = d.paidMonths + 1;
+        const newRemainingMonths = d.remainingMonths - 1;
+
+        const newSchedule = d.schedule.map((s, i) => {
+          if (i === pendingIndex) return { ...s, status: "PAID" as const };
+          // Move next UPCOMING to PENDING
+          if (i === pendingIndex + 1 && s.status === "UPCOMING") return { ...s, status: "PENDING" as const };
+          return s;
+        });
+
         return {
           ...d,
-          remainingMonths: newRemaining,
-          monthlyDeduction: newMonthly,
-          schedule: [...paidSchedule, ...pendingSchedule],
+          remainingAmount: newRemainingAmount,
+          remainingMonths: newRemainingMonths,
+          paidMonths: newPaidMonths,
+          schedule: newSchedule,
         };
       })
     );
-    toast({ title: "Repayment Updated", description: "Decreased repayment period by 1 month. Monthly deduction increased." });
+    toast({ title: "Deduction Applied", description: "Monthly deduction has been deducted from salary and remaining loan reduced." });
+  };
+
+  const handleDecreaseMonth = (loanId: number) => {
+    setDeductions((prev) =>
+      prev.map((d) => {
+        if (d.loanId !== loanId) return d;
+        const pendingAndUpcoming = d.schedule.filter((s) => s.status !== "PAID");
+        if (pendingAndUpcoming.length <= 1) return d;
+
+        const newRemainingMonths = d.remainingMonths - 1;
+        if (newRemainingMonths < 1) return d;
+
+        // Recalculate equal monthly deductions for remaining months
+        const equalAmount = Math.floor(d.remainingAmount / newRemainingMonths);
+        const lastMonthAmount = d.remainingAmount - equalAmount * (newRemainingMonths - 1);
+
+        const paidSchedule = d.schedule.filter((s) => s.status === "PAID");
+        const newPendingSchedule = [];
+        for (let i = 0; i < newRemainingMonths; i++) {
+          const date = new Date();
+          date.setMonth(date.getMonth() + i);
+          const monthStr = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          newPendingSchedule.push({
+            month: monthStr,
+            amount: i === newRemainingMonths - 1 ? lastMonthAmount : equalAmount,
+            status: i === 0 ? "PENDING" as const : "UPCOMING" as const,
+          });
+        }
+
+        return {
+          ...d,
+          remainingMonths: newRemainingMonths,
+          monthlyDeduction: equalAmount,
+          schedule: [...paidSchedule, ...newPendingSchedule],
+        };
+      })
+    );
+    toast({ title: "Repayment Updated", description: "Decreased repayment period by 1 month. Monthly deduction increased equally." });
   };
 
   const statusColor = (status: string) => {
@@ -68,7 +108,6 @@ const LoanDeductions = () => {
 
           {deductions.map((d) => (
             <div key={d.loanId} className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
-              {/* Summary Row */}
               <div
                 className="p-5 cursor-pointer hover:bg-muted/30 transition-colors"
                 onClick={() => setExpandedLoan(expandedLoan === d.loanId ? null : d.loanId)}
@@ -99,7 +138,6 @@ const LoanDeductions = () => {
                 </div>
               </div>
 
-              {/* Expanded Schedule */}
               {expandedLoan === d.loanId && (
                 <div className="border-t border-border">
                   <Table>
@@ -120,7 +158,16 @@ const LoanDeductions = () => {
                       ))}
                     </TableBody>
                   </Table>
-                  <div className="p-4 border-t border-border flex justify-end">
+                  <div className="p-4 border-t border-border flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90"
+                      onClick={() => handleDeductMonth(d.loanId)}
+                      disabled={!d.schedule.some((s) => s.status === "PENDING")}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Deduct This Month
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -142,4 +189,3 @@ const LoanDeductions = () => {
 };
 
 export default LoanDeductions;
-
