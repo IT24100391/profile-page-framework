@@ -46,8 +46,8 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Loan Amount (LKR)</Label>
-            <Input type="number" placeholder="Minimum 30,000" value={amount} onChange={(e) => setAmount(e.target.value)} required min={30000} />
-            <p className="text-xs text-muted-foreground">Minimum: LKR 30,000</p>
+            <Input type="number" placeholder="Maximum 30,000" value={amount} onChange={(e) => setAmount(e.target.value)} required max={30000} />
+            <p className="text-xs text-muted-foreground">Maximum: LKR 30,000</p>
           </div>
           <div className="space-y-2">
             <Label>Repayment Period (Months)</Label>
