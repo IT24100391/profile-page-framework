@@ -13,14 +13,8 @@ const GenerateIDCard = () => {
   const [downloading, setDownloading] = useState(false);
 
   const serialCode = `AFL-${mockUser.designation}-${String(mockUser.id).padStart(4, "0")}-${mockUser.nicNumber.slice(-4)}`;
-  const qrData = JSON.stringify({
-    id: mockUser.id,
-    name: mockUser.fullName,
-    nic: mockUser.nicNumber,
-    designation: mockUser.designation,
-    serial: serialCode,
-    company: "Ace Front Line Security",
-  });
+  const baseUrl = window.location.origin;
+  const qrData = `${baseUrl}/verify?name=${encodeURIComponent(mockUser.fullName)}&id=${mockUser.id}&nic=${encodeURIComponent(mockUser.nicNumber)}&designation=${encodeURIComponent(mockUser.designation)}&serial=${encodeURIComponent(serialCode)}`;
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
