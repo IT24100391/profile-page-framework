@@ -1,9 +1,13 @@
-import { Bell, Moon, Search, Shield } from "lucide-react";
+import { Bell, Moon, Sun, Search, Shield } from "lucide-react";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { useTheme } from "@/components/ThemeProvider";
 
-const navLinks = ["Dashboard", "Personnel", "Reports"];
+const navLinks = ["Details"];
 
 const ProfileNavbar = () => {
+  const { theme, setTheme } = useTheme();
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
   return (
     <header className="h-14 border-b border-border bg-card flex items-center px-6 gap-6 shrink-0">
       {/* Brand */}
@@ -55,8 +59,8 @@ const ProfileNavbar = () => {
             <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
           </div>
         </div>
-        <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-          <Moon className="w-4 h-4 text-muted-foreground" />
+        <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={toggleTheme} title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+          {theme === "dark" ? <Sun className="w-4 h-4 text-muted-foreground" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
         </button>
       </div>
     </header>
