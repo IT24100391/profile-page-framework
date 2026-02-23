@@ -32,8 +32,6 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
     setAmount(""); setReason(""); setRepaymentMonths("");
     onOpenChange(false);
   };
-    setAmount(""); setReason(""); setRepaymentMonths("");
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
