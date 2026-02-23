@@ -6,18 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import ProfileNavbar from "@/components/profile/ProfileNavbar";
+import { Shield, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 const LoanDeductions = () => {
   const navigate = useNavigate();
   const [deductions, setDeductions] = useState<LoanDeduction[]>(mockApprovedDeductions);
   const [expandedLoan, setExpandedLoan] = useState<number | null>(null);
+  const { theme, setTheme } = useTheme();
 
   const handleDeductMonth = (loanId: number) => {
     setDeductions((prev) =>
       prev.map((d) => {
         if (d.loanId !== loanId) return d;
-        // Find the first PENDING month and mark it as PAID
         const pendingIndex = d.schedule.findIndex((s) => s.status === "PENDING");
         if (pendingIndex === -1) return d;
 
@@ -28,7 +29,6 @@ const LoanDeductions = () => {
 
         const newSchedule = d.schedule.map((s, i) => {
           if (i === pendingIndex) return { ...s, status: "PAID" as const };
-          // Move next UPCOMING to PENDING
           if (i === pendingIndex + 1 && s.status === "UPCOMING") return { ...s, status: "PENDING" as const };
           return s;
         });
@@ -55,7 +55,6 @@ const LoanDeductions = () => {
         const newRemainingMonths = d.remainingMonths - 1;
         if (newRemainingMonths < 1) return d;
 
-        // Recalculate equal monthly deductions for remaining months
         const equalAmount = Math.floor(d.remainingAmount / newRemainingMonths);
         const lastMonthAmount = d.remainingAmount - equalAmount * (newRemainingMonths - 1);
 
@@ -93,7 +92,22 @@ const LoanDeductions = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <ProfileNavbar />
+      <header className="h-14 border-b border-border bg-card flex items-center px-6 gap-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <Shield className="w-4 h-4 text-primary-foreground" />
+          </div>
+          <span className="font-bold text-foreground text-base tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Ace Frontline
+          </span>
+        </div>
+        <span className="text-sm font-medium text-muted-foreground ml-2">Account Executive Portal</span>
+        <div className="ml-auto">
+          <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="w-4 h-4 text-muted-foreground" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+          </button>
+        </div>
+      </header>
       <div className="flex-1 overflow-auto p-8">
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="flex items-center gap-4 mb-2">
