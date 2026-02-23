@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import EditProfile from "./pages/EditProfile";
 import LoanApproval from "./pages/LoanApproval";
 import LoanDeductions from "./pages/LoanDeductions";
+import VerifyEmployee from "./pages/VerifyEmployee";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/edit-profile" element={<EditProfile />} />
             <Route path="/loan-approval" element={<LoanApproval />} />
             <Route path="/loan-deductions" element={<LoanDeductions />} />
+            <Route path="/verify" element={<VerifyEmployee />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
