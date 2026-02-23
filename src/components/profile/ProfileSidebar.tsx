@@ -3,7 +3,7 @@ import { UserProfile, designationLabels, roleLabels } from "@/data/mockUser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Eye, Calendar, FileText, Settings, LogOut, Shield, DollarSign, CreditCard, BadgeDollarSign, IdCard } from "lucide-react";
+import { Pencil, Eye, Calendar, FileText, LogOut, Shield, DollarSign, CreditCard, BadgeDollarSign, IdCard } from "lucide-react";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { useNavigate } from "react-router-dom";
 

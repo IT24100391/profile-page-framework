@@ -59,8 +59,8 @@ const ProfileNavbar = () => {
             <img src={profileAvatar} alt="Profile" className="w-full h-full object-cover" />
           </div>
         </div>
-        <button className="p-2 rounded-lg hover:bg-muted transition-colors">
-          <Moon className="w-4 h-4 text-muted-foreground" />
+        <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={toggleTheme} title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+          {theme === "dark" ? <Sun className="w-4 h-4 text-muted-foreground" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
         </button>
       </div>
     </header>
