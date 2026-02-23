@@ -11,6 +11,7 @@ const GenerateIDCard = () => {
   const designation = designationLabels[mockUser.designation];
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [showQR, setShowQR] = useState(true);
 
   const serialCode = `AFL-${mockUser.designation}-${String(mockUser.id).padStart(4, "0")}-${mockUser.nicNumber.slice(-4)}`;
   const baseUrl = window.location.origin;
