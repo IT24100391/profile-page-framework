@@ -14,7 +14,7 @@ const GenerateIDCard = () => {
   const [showQR, setShowQR] = useState(true);
 
   const serialCode = `AFL-${mockUser.designation}-${String(mockUser.id).padStart(4, "0")}-${mockUser.nicNumber.slice(-4)}`;
-  const verifyUrl = `https://id-preview--eac2a244-d638-4a81-ba4a-38d888f42af6.lovable.app/verify?name=${encodeURIComponent(mockUser.fullName)}&id=${mockUser.id}&nic=${encodeURIComponent(mockUser.nicNumber)}&designation=${encodeURIComponent(mockUser.designation)}&serial=${encodeURIComponent(serialCode)}`;
+  const verifyUrl = `https://id-preview--eac2a244-d638-4a81-ba4a-38d888f42af6.lovable.app/verify?name=${encodeURIComponent(mockUser.fullName)}&id=${mockUser.id}`;
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
