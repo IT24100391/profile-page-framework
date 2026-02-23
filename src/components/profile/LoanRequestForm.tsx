@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface LoanRequestFormProps {
   open: boolean;
@@ -15,12 +16,24 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [repaymentMonths, setRepaymentMonths] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ title: "Loan Request Submitted", description: `LKR ${parseFloat(amount).toLocaleString()} over ${repaymentMonths} months` });
-    setAmount(""); setReason(""); setRepaymentMonths("");
+    const parsedAmount = parseFloat(amount);
+    if (parsedAmount < 30000) {
+      toast({ title: "Invalid Amount", description: "Loan amount must be at least LKR 30,000.", variant: "destructive" });
+      return;
+    }
+    const months = parseInt(repaymentMonths);
+    if (months > 6) {
+      toast({ title: "Invalid Period", description: "Repayment period cannot exceed 6 months.", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Loan Request Submitted", description: `LKR ${parsedAmount.toLocaleString()} over ${months} months. Sent for approval.` });
     onOpenChange(false);
+    navigate("/loan-approval", { state: { amount: parsedAmount, repaymentMonths: months, reason } });
+    setAmount(""); setReason(""); setRepaymentMonths("");
   };
 
   return (
@@ -34,11 +47,13 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Loan Amount (LKR)</Label>
-            <Input type="number" placeholder="Enter amount" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+            <Input type="number" placeholder="Minimum 30,000" value={amount} onChange={(e) => setAmount(e.target.value)} required min={30000} />
+            <p className="text-xs text-muted-foreground">Minimum: LKR 30,000</p>
           </div>
           <div className="space-y-2">
             <Label>Repayment Period (Months)</Label>
-            <Input type="number" placeholder="e.g. 12" value={repaymentMonths} onChange={(e) => setRepaymentMonths(e.target.value)} required min={1} max={60} />
+            <Input type="number" placeholder="Max 6 months" value={repaymentMonths} onChange={(e) => setRepaymentMonths(e.target.value)} required min={1} max={6} />
+            <p className="text-xs text-muted-foreground">Maximum: 6 months</p>
           </div>
           <div className="space-y-2">
             <Label>Reason</Label>

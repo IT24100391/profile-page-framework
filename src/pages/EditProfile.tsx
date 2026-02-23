@@ -94,25 +94,6 @@ const EditProfile = () => {
             </div>
           </div>
 
-          {/* Bank Details */}
-          <div className="bg-card rounded-xl border border-border p-6" style={{ boxShadow: "var(--card-shadow)" }}>
-            <h3 className="text-base font-bold text-foreground mb-4">Bank Details</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Bank Name</Label>
-                <Input value={form.bankName || ""} onChange={(e) => handleChange("bankName", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Number</Label>
-                <Input value={form.bankAccountNumber || ""} onChange={(e) => handleChange("bankAccountNumber", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Branch</Label>
-                <Input value={form.bankBranch || ""} onChange={(e) => handleChange("bankBranch", e.target.value)} />
-              </div>
-            </div>
-          </div>
-
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => navigate("/")}>Cancel</Button>
             <Button onClick={handleSave} className="bg-primary text-primary-foreground hover:bg-primary/90">
