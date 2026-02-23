@@ -15,7 +15,6 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [repaymentMonths, setRepaymentMonths] = useState("");
-  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
