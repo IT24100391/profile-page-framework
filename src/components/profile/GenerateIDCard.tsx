@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { QRCodeSVG } from "qrcode.react";
 
 const GenerateIDCard = () => {
   const designation = designationLabels[mockUser.designation];
@@ -12,6 +13,14 @@ const GenerateIDCard = () => {
   const [downloading, setDownloading] = useState(false);
 
   const serialCode = `AFL-${mockUser.designation}-${String(mockUser.id).padStart(4, "0")}-${mockUser.nicNumber.slice(-4)}`;
+  const qrData = JSON.stringify({
+    id: mockUser.id,
+    name: mockUser.fullName,
+    nic: mockUser.nicNumber,
+    designation: mockUser.designation,
+    serial: serialCode,
+    company: "Ace Front Line Security",
+  });
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
@@ -36,7 +45,6 @@ const GenerateIDCard = () => {
         Employee ID Card
       </h3>
       <div className="max-w-sm mx-auto">
-        {/* Card */}
         <div ref={cardRef} className="bg-white rounded-xl border-2 border-primary/30 overflow-hidden" style={{ boxShadow: "var(--card-shadow-lg)" }}>
           {/* Header */}
           <div className="bg-[hsl(42,100%,50%)] px-5 py-3 text-center">
@@ -62,8 +70,12 @@ const GenerateIDCard = () => {
               <div className="flex justify-between"><span className="text-gray-500">Blood Group</span><span className="font-medium text-[hsl(220,20%,14%)]">O+</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Valid Until</span><span className="font-medium text-[hsl(220,20%,14%)]">Dec 2025</span></div>
             </div>
+            {/* QR Code */}
+            <div className="mt-4 p-2 bg-white rounded-lg border border-gray-200">
+              <QRCodeSVG value={qrData} size={100} level="M" />
+            </div>
             {/* Serial Code */}
-            <div className="mt-3 w-full border-t border-gray-200 pt-2">
+            <div className="mt-2 w-full border-t border-gray-200 pt-2">
               <p className="text-[9px] text-gray-400 uppercase tracking-wider">Serial No.</p>
               <p className="font-mono font-bold text-sm text-[hsl(220,20%,14%)] tracking-widest">{serialCode}</p>
             </div>

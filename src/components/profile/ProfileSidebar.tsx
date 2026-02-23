@@ -74,11 +74,13 @@ const ProfileSidebar = ({ user, activeView, onViewChange, avatarPreview, onAvata
               {isActive ? "Active" : "Inactive"}
             </span>
           </div>
-          <Switch
-            checked={isActive}
-            onCheckedChange={setIsActive}
-            className={`ml-auto ${isActive ? "data-[state=checked]:bg-[hsl(var(--success))]" : ""}`}
-          />
+          {user.role === "AREA_MANAGER" && (
+            <Switch
+              checked={isActive}
+              onCheckedChange={setIsActive}
+              className={`ml-auto ${isActive ? "data-[state=checked]:bg-[hsl(var(--success))]" : ""}`}
+            />
+          )}
         </div>
 
         <Button
