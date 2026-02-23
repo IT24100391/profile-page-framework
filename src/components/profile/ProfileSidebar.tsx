@@ -1,37 +1,62 @@
+import { useState } from "react";
 import { UserProfile, designationLabels, roleLabels } from "@/data/mockUser";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Pencil, Eye, Calendar, FileText, Settings, LogOut, Shield } from "lucide-react";
+import { Pencil, Eye, Calendar, FileText, Settings, LogOut, Shield, DollarSign, CreditCard, BadgeDollarSign, IdCard } from "lucide-react";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileSidebarProps {
   user: UserProfile;
+  activeView: string;
+  onViewChange: (view: string) => void;
+  avatarPreview: string | null;
+  onAvatarChange: (file: File) => void;
 }
 
 const navItems = [
-  { icon: Eye, label: "Profile Overview", active: true },
-  { icon: Calendar, label: "My Schedule", active: false },
-  { icon: FileText, label: "Leave Requests", active: false },
-  { icon: Settings, label: "Settings", active: false },
+  { icon: Eye, label: "Profile Overview", value: "overview" },
+  { icon: Calendar, label: "My Schedule", value: "schedule" },
+  { icon: FileText, label: "Paysheet History", value: "paysheet-history" },
+  { icon: DollarSign, label: "Month Paysheet", value: "month-paysheet" },
+  { icon: CreditCard, label: "Advance Request", value: "advance-request" },
+  { icon: BadgeDollarSign, label: "Loan Request", value: "loan-request" },
+  { icon: IdCard, label: "Generate ID Card", value: "id-card" },
+  { icon: Settings, label: "Settings", value: "settings" },
 ];
 
-const ProfileSidebar = ({ user }: ProfileSidebarProps) => {
+const ProfileSidebar = ({ user, activeView, onViewChange, avatarPreview, onAvatarChange }: ProfileSidebarProps) => {
+  const navigate = useNavigate();
   const designation = user.designation ? designationLabels[user.designation] : roleLabels[user.role];
+  const [isActive, setIsActive] = useState(user.active);
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      onAvatarChange(file);
+    }
+  };
 
   return (
     <aside className="w-64 shrink-0 flex flex-col border-r border-border bg-card">
       {/* Profile Card */}
       <div className="p-6 flex flex-col items-center border-b border-border">
-        <div className="relative mb-4">
-          <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary/30">
-            <img
-              src={profileAvatar}
-              alt={user.fullName}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[hsl(var(--success))] border-2 border-card" />
+        <div className="relative mb-4 group cursor-pointer">
+          <label className="cursor-pointer">
+            <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-primary/30 relative">
+              <img
+                src={avatarPreview || profileAvatar}
+                alt={user.fullName}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-white text-[10px] font-semibold">Change Photo</span>
+              </div>
+            </div>
+            <input type="file" accept="image/jpeg,image/png,image/jpg" className="hidden" onChange={handleAvatarUpload} />
+          </label>
+          <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-card ${isActive ? "bg-[hsl(var(--success))]" : "bg-muted-foreground"}`} />
         </div>
         <h2 className="text-lg font-bold text-foreground">{user.fullName.split(" ")[0]} {user.fullName.split(" ").pop()}</h2>
         <span className="text-xs font-semibold tracking-wider uppercase text-primary mt-1">
@@ -46,24 +71,34 @@ const ProfileSidebar = ({ user }: ProfileSidebarProps) => {
         <div className="flex items-center gap-3 mt-4 w-full">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Duty Status</span>
-            <span className="text-sm font-semibold text-[hsl(var(--success))]">Active</span>
+            <span className={`text-sm font-semibold ${isActive ? "text-[hsl(var(--success))]" : "text-muted-foreground"}`}>
+              {isActive ? "Active" : "Inactive"}
+            </span>
           </div>
-          <Switch checked={user.active} className="ml-auto data-[state=checked]:bg-[hsl(var(--success))]" />
+          <Switch
+            checked={isActive}
+            onCheckedChange={setIsActive}
+            className={`ml-auto ${isActive ? "data-[state=checked]:bg-[hsl(var(--success))]" : ""}`}
+          />
         </div>
 
-        <Button className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+        <Button
+          className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+          onClick={() => navigate("/edit-profile")}
+        >
           <Pencil className="w-4 h-4 mr-2" />
           Edit Profile
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-auto">
         {navItems.map((item) => (
           <button
-            key={item.label}
+            key={item.value}
+            onClick={() => onViewChange(item.value)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-              item.active
+              activeView === item.value
                 ? "bg-primary/10 text-foreground font-semibold"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
