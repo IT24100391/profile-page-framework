@@ -83,7 +83,14 @@ const GenerateIDCard = () => {
           </div>
         </div>
 
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center gap-3 mt-4">
+          <Button
+            variant={showQR ? "default" : "outline"}
+            onClick={() => setShowQR(!showQR)}
+          >
+            <QrCode className="w-4 h-4 mr-2" />
+            {showQR ? "Hide QR" : "Show QR"}
+          </Button>
           <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleDownloadPDF} disabled={downloading}>
             {downloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             {downloading ? "Generating PDF..." : "Download as PDF"}
