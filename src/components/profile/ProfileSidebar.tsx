@@ -23,7 +23,6 @@ const navItems = [
   { icon: CreditCard, label: "Advance Request", value: "advance-request" },
   { icon: BadgeDollarSign, label: "Loan Request", value: "loan-request" },
   { icon: IdCard, label: "Generate ID Card", value: "id-card" },
-  { icon: Settings, label: "Settings", value: "settings" },
 ];
 
 const ProfileSidebar = ({ user, activeView, onViewChange, avatarPreview, onAvatarChange }: ProfileSidebarProps) => {
