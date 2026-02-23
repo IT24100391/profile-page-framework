@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { mockUser, designationLabels } from "@/data/mockUser";
-import { Shield, Download, Loader2 } from "lucide-react";
+import { Shield, Download, Loader2, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import jsPDF from "jspdf";
