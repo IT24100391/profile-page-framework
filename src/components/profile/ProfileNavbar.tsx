@@ -1,7 +1,8 @@
-import { Bell, Moon, Search, Shield } from "lucide-react";
+import { Bell, Moon, Sun, Search, Shield } from "lucide-react";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { useTheme } from "@/components/ThemeProvider";
 
-const navLinks = ["Dashboard", "Personnel", "Reports"];
+const navLinks = ["Details"];
 
 const ProfileNavbar = () => {
   return (
