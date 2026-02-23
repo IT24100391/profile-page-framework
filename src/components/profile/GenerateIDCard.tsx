@@ -65,9 +65,11 @@ const GenerateIDCard = () => {
               <div className="flex justify-between"><span className="text-gray-500">Valid Until</span><span className="font-medium text-[hsl(220,20%,14%)]">Dec 2025</span></div>
             </div>
             {/* QR Code */}
-            <div className="mt-4 p-2 bg-white rounded-lg border border-gray-200">
-              <QRCodeSVG value={qrData} size={100} level="M" />
-            </div>
+            {showQR && (
+              <div className="mt-4 p-2 bg-white rounded-lg border border-gray-200">
+                <QRCodeSVG value={verifyUrl} size={100} level="M" />
+              </div>
+            )}
             {/* Serial Code */}
             <div className="mt-2 w-full border-t border-gray-200 pt-2">
               <p className="text-[9px] text-gray-400 uppercase tracking-wider">Serial No.</p>
