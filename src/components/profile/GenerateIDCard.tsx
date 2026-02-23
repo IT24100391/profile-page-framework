@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { mockUser, designationLabels } from "@/data/mockUser";
-import { Shield, Download, Loader2 } from "lucide-react";
+import { Shield, Download, Loader2, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import jsPDF from "jspdf";
@@ -11,10 +11,10 @@ const GenerateIDCard = () => {
   const designation = designationLabels[mockUser.designation];
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [showQR, setShowQR] = useState(true);
 
   const serialCode = `AFL-${mockUser.designation}-${String(mockUser.id).padStart(4, "0")}-${mockUser.nicNumber.slice(-4)}`;
-  const baseUrl = window.location.origin;
-  const qrData = `${baseUrl}/verify?name=${encodeURIComponent(mockUser.fullName)}&id=${mockUser.id}&nic=${encodeURIComponent(mockUser.nicNumber)}&designation=${encodeURIComponent(mockUser.designation)}&serial=${encodeURIComponent(serialCode)}`;
+  const verifyUrl = `https://id-preview--eac2a244-d638-4a81-ba4a-38d888f42af6.lovable.app/verify?name=${encodeURIComponent(mockUser.fullName)}&id=${mockUser.id}&nic=${encodeURIComponent(mockUser.nicNumber)}&designation=${encodeURIComponent(mockUser.designation)}&serial=${encodeURIComponent(serialCode)}`;
 
   const handleDownloadPDF = async () => {
     if (!cardRef.current) return;
@@ -65,9 +65,11 @@ const GenerateIDCard = () => {
               <div className="flex justify-between"><span className="text-gray-500">Valid Until</span><span className="font-medium text-[hsl(220,20%,14%)]">Dec 2025</span></div>
             </div>
             {/* QR Code */}
-            <div className="mt-4 p-2 bg-white rounded-lg border border-gray-200">
-              <QRCodeSVG value={qrData} size={100} level="M" />
-            </div>
+            {showQR && (
+              <div className="mt-4 p-2 bg-white rounded-lg border border-gray-200">
+                <QRCodeSVG value={verifyUrl} size={100} level="M" />
+              </div>
+            )}
             {/* Serial Code */}
             <div className="mt-2 w-full border-t border-gray-200 pt-2">
               <p className="text-[9px] text-gray-400 uppercase tracking-wider">Serial No.</p>
@@ -81,7 +83,14 @@ const GenerateIDCard = () => {
           </div>
         </div>
 
-        <div className="flex justify-center mt-4">
+        <div className="flex justify-center gap-3 mt-4">
+          <Button
+            variant={showQR ? "default" : "outline"}
+            onClick={() => setShowQR(!showQR)}
+          >
+            <QrCode className="w-4 h-4 mr-2" />
+            {showQR ? "Hide QR" : "Show QR"}
+          </Button>
           <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleDownloadPDF} disabled={downloading}>
             {downloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             {downloading ? "Generating PDF..." : "Download as PDF"}
