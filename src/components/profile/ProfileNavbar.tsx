@@ -5,6 +5,9 @@ import { useTheme } from "@/components/ThemeProvider";
 const navLinks = ["Details"];
 
 const ProfileNavbar = () => {
+  const { theme, setTheme } = useTheme();
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
   return (
     <header className="h-14 border-b border-border bg-card flex items-center px-6 gap-6 shrink-0">
       {/* Brand */}
