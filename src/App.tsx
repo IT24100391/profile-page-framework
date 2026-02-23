@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import EditProfile from "./pages/EditProfile";
 import LoanApproval from "./pages/LoanApproval";
 import LoanDeductions from "./pages/LoanDeductions";
+import VerifyEmployee from "./pages/VerifyEmployee";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
