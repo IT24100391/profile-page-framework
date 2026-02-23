@@ -21,8 +21,8 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
-    if (parsedAmount < 30000) {
-      toast({ title: "Invalid Amount", description: "Loan amount must be at least LKR 30,000.", variant: "destructive" });
+    if (parsedAmount > 30000) {
+      toast({ title: "Invalid Amount", description: "Loan amount cannot exceed LKR 30,000.", variant: "destructive" });
       return;
     }
     const months = parseInt(repaymentMonths);
@@ -30,9 +30,10 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
       toast({ title: "Invalid Period", description: "Repayment period cannot exceed 6 months.", variant: "destructive" });
       return;
     }
-    toast({ title: "Loan Request Submitted", description: `LKR ${parsedAmount.toLocaleString()} over ${months} months. Sent for approval.` });
+    toast({ title: "Loan Request Submitted", description: `LKR ${parsedAmount.toLocaleString()} over ${months} months. Sent for executive officer approval.` });
+    setAmount(""); setReason(""); setRepaymentMonths("");
     onOpenChange(false);
-    navigate("/loan-approval", { state: { amount: parsedAmount, repaymentMonths: months, reason } });
+  };
     setAmount(""); setReason(""); setRepaymentMonths("");
   };
 
