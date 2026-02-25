@@ -4,6 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import Home from "./pages/Home";
+import Careers from "./pages/Careers";
+import Inquiries from "./pages/Inquiries";
+import LoginPortal from "./pages/LoginPortal";
+import StaffLogin from "./pages/StaffLogin";
+import ClientsPage from "./pages/ClientsPage";
 import Index from "./pages/Index";
 import EditProfile from "./pages/EditProfile";
 import LoanApproval from "./pages/LoanApproval";
@@ -15,18 +21,24 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="ace-theme">
+    <ThemeProvider defaultTheme="light" storageKey="stallion-theme">
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/careers" element={<Careers />} />
+            <Route path="/inquiries" element={<Inquiries />} />
+            <Route path="/login" element={<LoginPortal />} />
+            <Route path="/staff-login" element={<StaffLogin />} />
+            <Route path="/client-login" element={<LoginPortal />} />
+            <Route path="/clients" element={<ClientsPage />} />
+            <Route path="/profile" element={<Index />} />
             <Route path="/edit-profile" element={<EditProfile />} />
             <Route path="/loan-approval" element={<LoanApproval />} />
             <Route path="/loan-deductions" element={<LoanDeductions />} />
             <Route path="/verify" element={<VerifyEmployee />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
