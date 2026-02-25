@@ -1,28 +1,25 @@
 import { useState } from "react";
-import { Shield, Users, ClipboardList, Settings, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Shield, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 
-const roles = [
-  { id: "area_manager", label: "Area Manager", desc: "Manage regions & reports", icon: Users },
-  { id: "security_officer", label: "Security Officer", desc: "Paysheets & leave requests", icon: Shield },
-  { id: "accountant", label: "Accountant", desc: "Payroll & financials", icon: ClipboardList },
-  { id: "admin", label: "Admin", desc: "Full system access", icon: Settings },
-];
-
+// Maps backend Role enum to dashboard routes
 const dashboardRoutes: Record<string, string> = {
-  area_manager: "/verify",
-  security_officer: "/",
-  accountant: "/loan-deductions",
-  admin: "/loan-approval",
+  AREA_MANAGER: "/verify",
+  SECURITY_OFFICER: "/profile",
+  ACCOUNT_EXECUTIVE: "/loan-deductions",
+  OPERATION_MANAGER: "/loan-approval",
+  DIRECTOR: "/loan-approval",
+  CHAIRMAN: "/loan-approval",
+  EXECUTIVE_OFFICER: "/loan-approval",
+  ADMIN: "/loan-approval",
+  SUPER_ADMIN: "/loan-approval",
 };
 
 export default function StaffLogin() {
-  const [selectedRole, setSelectedRole] = useState("area_manager");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -41,95 +38,62 @@ export default function StaffLogin() {
       const res = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, role: selectedRole }),
+        body: JSON.stringify({ username, password }),
       });
-      if (!res.ok) throw new Error("Invalid credentials");
-      const data = await res.json();
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", selectedRole);
-      localStorage.setItem("user", JSON.stringify(data.user || { username }));
-      toast({ title: "Login successful", description: `Welcome, ${username}` });
-      navigate(dashboardRoutes[selectedRole] || "/");
-    } catch {
-      localStorage.setItem("token", "demo-token");
-      localStorage.setItem("role", selectedRole);
-      localStorage.setItem("user", JSON.stringify({ username }));
-      toast({ title: "Demo Login", description: `Logged in as ${selectedRole}` });
-      navigate(dashboardRoutes[selectedRole] || "/");
+
+      const apiResponse = await res.json();
+
+      if (!res.ok || !apiResponse.success) {
+        throw new Error(apiResponse.message || "Invalid credentials");
+      }
+
+      const loginData = apiResponse.data;
+
+      // Store auth data
+      localStorage.setItem("token", loginData.token);
+      localStorage.setItem("refreshToken", loginData.refreshToken);
+      localStorage.setItem("role", loginData.role);
+      localStorage.setItem("userId", String(loginData.userId));
+      localStorage.setItem("user", JSON.stringify({
+        userId: loginData.userId,
+        username: loginData.username,
+        fullName: loginData.fullName,
+        role: loginData.role,
+        firstLogin: loginData.firstLogin,
+      }));
+
+      toast({ title: "Login successful", description: `Welcome, ${loginData.fullName}` });
+
+      if (loginData.firstLogin) {
+        navigate("/profile");
+      } else {
+        navigate(dashboardRoutes[loginData.role] || "/profile");
+      }
+    } catch (err: any) {
+      toast({ title: "Login Failed", description: err.message || "Unable to connect to server", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const SelectedIcon = roles.find((r) => r.id === selectedRole)?.icon || Shield;
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      {/* Background accents */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -right-32 bottom-1/4 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full max-w-lg">
-        {/* Header */}
+      <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-2 ring-primary/30">
-            <SelectedIcon className="h-8 w-8 text-primary" />
+            <Shield className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-extrabold text-foreground">Staff Portal</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Select your role and sign in to continue</p>
+          <p className="mt-1 text-sm text-muted-foreground">Sign in with your credentials</p>
         </div>
 
         <Card className="border-border/60 bg-card shadow-xl">
           <CardContent className="p-6 md:p-8">
-            {/* Role Selector */}
-            <div className="mb-6">
-              <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Select Role
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {roles.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setSelectedRole(r.id)}
-                    className={cn(
-                      "group relative rounded-xl border-2 p-4 text-left transition-all duration-200",
-                      selectedRole === r.id
-                        ? "border-primary bg-primary/10 shadow-md shadow-primary/10"
-                        : "border-border hover:border-primary/30 hover:bg-muted/50"
-                    )}
-                  >
-                    {selectedRole === r.id && (
-                      <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-                    )}
-                    <r.icon
-                      className={cn(
-                        "mb-2 h-5 w-5 transition-colors",
-                        selectedRole === r.id ? "text-primary" : "text-muted-foreground group-hover:text-primary/70"
-                      )}
-                    />
-                    <div className={cn("text-sm font-bold", selectedRole === r.id ? "text-foreground" : "text-foreground/80")}>
-                      {r.label}
-                    </div>
-                    <div className="text-xs text-muted-foreground">{r.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-card px-3 text-xs font-medium text-muted-foreground">CREDENTIALS</span>
-              </div>
-            </div>
-
-            {/* Form */}
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">Username</label>
