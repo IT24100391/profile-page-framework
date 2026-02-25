@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Shield, Menu, X, LogIn } from "lucide-react";
+import { Shield, Menu, X, LogIn, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/ThemeProvider";
 
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "Services", path: "/#services" },
   { label: "Careers", path: "/careers" },
-  { label: "Clients", path: "/clients" },
-  { label: "Inquiries", path: "/inquiries" },
+  { label: "Contact Us", path: "/inquiries" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -43,6 +46,9 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-foreground">
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           <Link to="/login">
             <Button size="sm" className="hidden bg-primary text-primary-foreground font-semibold hover:bg-primary/90 md:flex">
               <LogIn className="mr-1 h-4 w-4" /> Login
