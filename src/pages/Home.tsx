@@ -7,6 +7,7 @@ import Navbar from "@/components/website/Navbar";
 import Footer from "@/components/website/Footer";
 import heroBg from "@/assets/hero-bg.jpg";
 import { useEffect, useRef, useState } from "react";
+import { allClients } from "@/data/clientsData";
 
 const services = [
   { icon: Users, title: "Manned Guarding", desc: "Trained security personnel for commercial, residential, and industrial premises." },
@@ -82,26 +83,28 @@ export default function Home() {
       <section className="relative flex min-h-[85vh] items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={heroBg} alt="Security team" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[hsl(228,26%,14%)/0.9] via-[hsl(228,26%,14%)/0.7] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-transparent" />
         </div>
         <div className="container relative z-10 mx-auto px-4 py-20">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-sm text-primary">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
             <Shield className="h-4 w-4" /> TRUSTED PROTECTION
           </div>
-          <h1 className="mt-6 max-w-2xl text-5xl font-extrabold leading-tight text-white md:text-7xl">
+          <h1 className="mt-6 max-w-2xl text-5xl font-extrabold leading-tight text-foreground md:text-7xl">
             World Class{" "}
             <span className="text-primary">Security Solutions</span>
           </h1>
-          <p className="mt-4 max-w-xl text-base text-white/70">
+          <p className="mt-4 max-w-xl text-base text-muted-foreground">
             Led by elite ex-military professionals with over 9 years of experience,
             providing comprehensive commercial, industrial and event security services.
           </p>
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 flex flex-wrap gap-4">
             <Link to="/inquiries">
-              <Button size="lg" className="font-semibold">Get a Quote</Button>
+              <Button size="lg" className="bg-primary text-primary-foreground font-bold hover:bg-primary/90 text-base px-8">
+                Get a Quote
+              </Button>
             </Link>
             <a href="#services">
-              <Button size="lg" variant="outline" className="border-white/30 font-semibold text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-primary/50 font-semibold text-primary hover:bg-primary/10 text-base px-8">
                 View Services
               </Button>
             </a>
@@ -149,7 +152,7 @@ export default function Home() {
       </section>
 
       {/* About */}
-      <section className="bg-secondary/50 py-20">
+      <section className="border-y border-border bg-secondary/30 py-20">
         <div className="container mx-auto grid gap-12 px-4 md:grid-cols-2">
           <div>
             <span className="text-sm font-semibold uppercase tracking-widest text-primary">About Us</span>
@@ -179,7 +182,7 @@ export default function Home() {
           <div className="flex items-center justify-center">
             <div className="relative h-80 w-full overflow-hidden rounded-xl bg-muted">
               <img src={heroBg} alt="About Stallion Security" className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[hsl(228,26%,14%)/0.5] to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
               <div className="absolute bottom-4 left-4 rounded-lg bg-primary px-4 py-2">
                 <span className="text-lg font-bold text-primary-foreground">9+ Years</span>
                 <span className="ml-1 text-sm text-primary-foreground/80">of Excellence</span>
@@ -214,7 +217,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="bg-secondary/50 py-20">
+      <section className="border-y border-border bg-secondary/30 py-20">
         <div className="container mx-auto px-4">
           <div className="mb-12 text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-primary">Testimonials</span>
@@ -243,16 +246,25 @@ export default function Home() {
       {/* Client Logos */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="mb-8 text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-primary">Trusted By</span>
-            <h2 className="mt-2 text-2xl font-bold">Our Valued Clients</h2>
+          <div className="mb-2 text-center">
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">Our Clientele</span>
+            <h2 className="mt-2 text-2xl font-bold text-foreground md:text-3xl">Trusted by {allClients.length}+ Organizations</h2>
+            <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-primary" />
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-            {["ABC Industries", "Lanka Hotels", "Pacific Exports", "Metro Bank", "TechCorp", "SkyLine"].map((name) => (
-              <div key={name} className="flex h-16 items-center rounded-lg bg-muted px-6 text-sm font-semibold text-muted-foreground">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            {allClients.slice(0, 5).map((name) => (
+              <div key={name} className="flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm">
+                <Lock className="h-3.5 w-3.5 text-primary" />
                 {name}
               </div>
             ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Link to="/clients">
+              <Button variant="outline" className="border-primary/50 text-primary font-semibold hover:bg-primary/10">
+                Show More <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -263,11 +275,11 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-primary-foreground md:text-4xl">
             Ready to Secure Your Business?
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-primary-foreground/80">
+          <p className="mx-auto mt-3 max-w-lg text-sm text-primary-foreground/70">
             Contact us today for a free security assessment and customized solutions.
           </p>
           <Link to="/inquiries">
-            <Button size="lg" variant="outline" className="mt-6 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
+            <Button size="lg" className="mt-6 bg-background text-foreground font-bold hover:bg-background/90 text-base px-8">
               Contact Us <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </Link>
