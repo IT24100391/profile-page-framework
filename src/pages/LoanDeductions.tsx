@@ -15,14 +15,15 @@ import { useTheme } from "@/components/ThemeProvider";
 const LoanDeductions = () => {
   const navigate = useNavigate();
   const [deductions, setDeductions] = useState<LoanDeduction[]>(getApprovedDeductions());
+  const [advances, setAdvances] = useState<ApprovedAdvance[]>(getApprovedAdvances());
   const [expandedLoan, setExpandedLoan] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"loans" | "advances">("loans");
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    const unsub = subscribeLoanStore(() => {
-      setDeductions(getApprovedDeductions());
-    });
-    return unsub;
+    const unsub1 = subscribeLoanStore(() => setDeductions(getApprovedDeductions()));
+    const unsub2 = subscribeAdvanceStore(() => setAdvances(getApprovedAdvances()));
+    return () => { unsub1(); unsub2(); };
   }, []);
 
   const handleDeductMonth = (loanId: number) => {
