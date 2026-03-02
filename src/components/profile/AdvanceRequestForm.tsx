@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { mockUser } from "@/data/mockUser";
+import { submitAdvanceRequest } from "@/stores/advanceStore";
 
 interface AdvanceRequestFormProps {
   open: boolean;
@@ -30,7 +31,16 @@ const AdvanceRequestForm = ({ open, onOpenChange }: AdvanceRequestFormProps) => 
       toast({ title: "Error", description: "Advance requests are only allowed before the 15th of the month.", variant: "destructive" });
       return;
     }
-    toast({ title: "Advance Request Submitted", description: `LKR ${numAmount.toLocaleString()} for ${forMonth}` });
+
+    submitAdvanceRequest({
+      employeeName: mockUser.fullName,
+      employeeId: mockUser.id,
+      amount: numAmount,
+      forMonth,
+      reason,
+    });
+
+    toast({ title: "Advance Request Submitted", description: `LKR ${numAmount.toLocaleString()} for ${forMonth}. Sent to Area Manager for approval.` });
     setAmount(""); setReason(""); setForMonth("");
     onOpenChange(false);
   };

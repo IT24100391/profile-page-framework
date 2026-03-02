@@ -1,0 +1,224 @@
+import { useState, useEffect } from "react";
+import { getAdvanceRequests, approveAdvance, rejectAdvance, subscribeAdvanceStore } from "@/stores/advanceStore";
+import { AdvanceRequest } from "@/data/advanceData";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Bell, Banknote } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Shield, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
+
+const AdvanceApproval = () => {
+  const navigate = useNavigate();
+  const [advances, setAdvances] = useState<AdvanceRequest[]>(getAdvanceRequests());
+  const [notifications, setNotifications] = useState<string[]>([]);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    const unsub = subscribeAdvanceStore(() => {
+      setAdvances(getAdvanceRequests());
+    });
+    return unsub;
+  }, []);
+
+  const handleApprove = (id: number) => {
+    approveAdvance(id, "Area Manager");
+    const adv = advances.find((a) => a.id === id);
+    const msg = `${adv?.employeeName}'s advance of LKR ${adv?.amount.toLocaleString()} has been approved.`;
+    setNotifications((prev) => [msg, ...prev]);
+    toast({ title: "Advance Approved", description: msg });
+  };
+
+  const openRejectDialog = (id: number) => {
+    setRejectingId(id);
+    setRejectReason("");
+    setRejectDialogOpen(true);
+  };
+
+  const handleRejectConfirm = () => {
+    if (!rejectingId || !rejectReason.trim()) {
+      toast({ title: "Reason Required", description: "Please provide a reason for rejection.", variant: "destructive" });
+      return;
+    }
+    rejectAdvance(rejectingId, "Area Manager", rejectReason.trim());
+    const adv = advances.find((a) => a.id === rejectingId);
+    const msg = `${adv?.employeeName}'s advance of LKR ${adv?.amount.toLocaleString()} has been rejected.`;
+    setNotifications((prev) => [msg, ...prev]);
+    toast({ title: "Advance Rejected", description: msg });
+    setRejectDialogOpen(false);
+    setRejectingId(null);
+    setRejectReason("");
+  };
+
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case "APPROVED": return <Badge className="bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30"><CheckCircle className="w-3 h-3 mr-1" />Approved</Badge>;
+      case "REJECTED": return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Rejected</Badge>;
+      default: return <Badge variant="outline" className="text-[hsl(var(--warning))] border-[hsl(var(--warning))]/30"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+    }
+  };
+
+  const pendingAdvances = advances.filter((a) => a.status === "PENDING");
+  const processedAdvances = advances.filter((a) => a.status !== "PENDING");
+
+  return (
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
+      <header className="h-14 border-b border-border bg-card flex items-center px-6 gap-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+            <Shield className="w-4 h-4 text-primary-foreground" />
+          </div>
+          <span className="font-bold text-foreground text-base tracking-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Ace Frontline
+          </span>
+        </div>
+        <span className="text-sm font-medium text-muted-foreground ml-2">Area Manager Portal</span>
+        <div className="ml-auto">
+          <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="w-4 h-4 text-muted-foreground" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-auto p-8">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="flex items-center gap-4 mb-2">
+            <Button variant="outline" size="icon" onClick={() => navigate("/")}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              <Banknote className="w-5 h-5 text-primary" />
+              Advance Approval — Area Manager
+            </h1>
+          </div>
+
+          {notifications.length > 0 && (
+            <div className="bg-card rounded-xl border border-border p-4 space-y-2" style={{ boxShadow: "var(--card-shadow)" }}>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2"><Bell className="w-4 h-4 text-primary" />Recent Actions</h3>
+              {notifications.map((n, i) => (
+                <div key={i} className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">{n}</div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending Advances */}
+          <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
+            <div className="px-5 py-3 border-b border-border">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[hsl(var(--warning))]" />
+                Pending Advance Requests ({pendingAdvances.length})
+              </h3>
+            </div>
+            {pendingAdvances.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">No pending advance requests.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Amount (LKR)</TableHead>
+                    <TableHead>For Month</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingAdvances.map((adv) => (
+                    <TableRow key={adv.id}>
+                      <TableCell className="font-medium text-foreground">{adv.employeeName}</TableCell>
+                      <TableCell className="font-mono">{adv.amount.toLocaleString()}</TableCell>
+                      <TableCell>{adv.forMonth}</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">{adv.reason}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90" onClick={() => handleApprove(adv.id)}>
+                            <CheckCircle className="w-3 h-3 mr-1" />Approve
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => openRejectDialog(adv.id)}>
+                            <XCircle className="w-3 h-3 mr-1" />Reject
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          {/* Processed */}
+          {processedAdvances.length > 0 && (
+            <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
+              <div className="px-5 py-3 border-b border-border">
+                <h3 className="text-sm font-bold text-foreground">Processed Requests</h3>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Amount (LKR)</TableHead>
+                    <TableHead>For Month</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {processedAdvances.map((adv) => (
+                    <TableRow key={adv.id}>
+                      <TableCell className="font-medium text-foreground">{adv.employeeName}</TableCell>
+                      <TableCell className="font-mono">{adv.amount.toLocaleString()}</TableCell>
+                      <TableCell>{adv.forMonth}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {statusBadge(adv.status)}
+                          {adv.status === "REJECTED" && adv.rejectReason && (
+                            <p className="text-xs text-destructive mt-1">Reason: {adv.rejectReason}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <XCircle className="w-5 h-5 text-destructive" />
+              Reject Advance Request
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label>Reason for Rejection</Label>
+            <Textarea
+              placeholder="Please provide a reason for rejecting this advance request..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleRejectConfirm}>
+              <XCircle className="w-3 h-3 mr-1" />Confirm Rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default AdvanceApproval;
