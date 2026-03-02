@@ -12,7 +12,7 @@ function notify() {
 
 export function subscribeLoanStore(fn: () => void) {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => { listeners.delete(fn); };
 }
 
 // === LOAN REQUESTS (Security Officer submits, Executive Officer reviews) ===
