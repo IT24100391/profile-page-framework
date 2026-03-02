@@ -75,16 +75,29 @@ const LoanDeductions = () => {
             </Button>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               <DollarSign className="w-5 h-5 text-primary" />
-              Loan Deductions — Account Executive
+              Deductions — Account Executive
             </h1>
           </div>
 
-          {deductions.length === 0 ? (
-            <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
-              <DollarSign className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground text-sm">No approved loans for deduction yet.</p>
-              <p className="text-muted-foreground text-xs mt-1">Approved loans from the Executive Officer will appear here.</p>
-            </div>
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === "loans" ? "default" : "outline"}
+              onClick={() => setActiveTab("loans")}
+              className={activeTab === "loans" ? "bg-primary text-primary-foreground" : ""}
+            >
+              <DollarSign className="w-4 h-4 mr-1" />
+              Loan Deductions ({deductions.length})
+            </Button>
+            <Button
+              variant={activeTab === "advances" ? "default" : "outline"}
+              onClick={() => setActiveTab("advances")}
+              className={activeTab === "advances" ? "bg-primary text-primary-foreground" : ""}
+            >
+              <Banknote className="w-4 h-4 mr-1" />
+              Advance Deductions ({advances.filter(a => !a.deducted).length})
+            </Button>
+          </div>
           ) : (
             deductions.map((d) => (
               <div key={d.loanId} className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
