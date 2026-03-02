@@ -36,6 +36,11 @@ const LoanDeductions = () => {
     toast({ title: "Repayment Updated", description: "Decreased repayment period by 1 month. Monthly deduction increased equally." });
   };
 
+  const handleAdvanceDeduct = (advanceId: number) => {
+    markAdvanceDeducted(advanceId);
+    toast({ title: "Advance Deducted", description: "Advance has been deducted from salary. Notification sent to employee." });
+  };
+
   const statusColor = (status: string) => {
     switch (status) {
       case "PAID": return "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]";
