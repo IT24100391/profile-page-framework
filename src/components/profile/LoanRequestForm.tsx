@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { submitLoanRequest } from "@/stores/loanStore";
+import { mockUser } from "@/data/mockUser";
 
 interface LoanRequestFormProps {
   open: boolean;
@@ -28,6 +30,15 @@ const LoanRequestForm = ({ open, onOpenChange }: LoanRequestFormProps) => {
       toast({ title: "Invalid Period", description: "Repayment period cannot exceed 6 months.", variant: "destructive" });
       return;
     }
+
+    submitLoanRequest({
+      employeeName: mockUser.fullName,
+      employeeId: mockUser.id,
+      amount: parsedAmount,
+      repaymentMonths: months,
+      reason,
+    });
+
     toast({ title: "Loan Request Submitted", description: `LKR ${parsedAmount.toLocaleString()} over ${months} months. Sent for executive officer approval.` });
     setAmount(""); setReason(""); setRepaymentMonths("");
     onOpenChange(false);

@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { mockPendingLoans, LoanRequest } from "@/data/loanData";
+import { useState, useEffect, useCallback } from "react";
+import { getLoanRequests, approveLoan, rejectLoan, subscribeLoanStore } from "@/stores/loanStore";
+import { LoanRequest } from "@/data/loanData";
 import { ArrowLeft, CheckCircle, XCircle, Clock, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,19 +15,23 @@ import { useTheme } from "@/components/ThemeProvider";
 
 const LoanApproval = () => {
   const navigate = useNavigate();
-  const [loans, setLoans] = useState<LoanRequest[]>(mockPendingLoans);
+  const [loans, setLoans] = useState<LoanRequest[]>(getLoanRequests());
   const [notifications, setNotifications] = useState<string[]>([]);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectingLoanId, setRejectingLoanId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const { theme, setTheme } = useTheme();
 
+  // Subscribe to store changes
+  useEffect(() => {
+    const unsub = subscribeLoanStore(() => {
+      setLoans(getLoanRequests());
+    });
+    return unsub;
+  }, []);
+
   const handleApprove = (id: number) => {
-    setLoans((prev) =>
-      prev.map((l) =>
-        l.id === id ? { ...l, status: "APPROVED", approvedBy: "Executive Officer", approvedAt: new Date().toISOString() } : l
-      )
-    );
+    approveLoan(id, "Executive Officer");
     const loan = loans.find((l) => l.id === id);
     const msg = `${loan?.employeeName}'s loan of LKR ${loan?.amount.toLocaleString()} has been approved.`;
     setNotifications((prev) => [msg, ...prev]);
@@ -44,15 +49,9 @@ const LoanApproval = () => {
       toast({ title: "Reason Required", description: "Please provide a reason for rejection.", variant: "destructive" });
       return;
     }
-    setLoans((prev) =>
-      prev.map((l) =>
-        l.id === rejectingLoanId
-          ? { ...l, status: "REJECTED", approvedBy: "Executive Officer", approvedAt: new Date().toISOString(), rejectReason: rejectReason.trim() }
-          : l
-      )
-    );
+    rejectLoan(rejectingLoanId, "Executive Officer", rejectReason.trim());
     const loan = loans.find((l) => l.id === rejectingLoanId);
-    const msg = `${loan?.employeeName}'s loan of LKR ${loan?.amount.toLocaleString()} has been rejected. Reason: ${rejectReason.trim()}`;
+    const msg = `${loan?.employeeName}'s loan of LKR ${loan?.amount.toLocaleString()} has been rejected.`;
     setNotifications((prev) => [msg, ...prev]);
     toast({ title: "Loan Rejected", description: msg });
     setRejectDialogOpen(false);
@@ -67,6 +66,9 @@ const LoanApproval = () => {
       default: return <Badge variant="outline" className="text-[hsl(var(--warning))] border-[hsl(var(--warning))]/30"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
     }
   };
+
+  const pendingLoans = loans.filter((l) => l.status === "PENDING");
+  const processedLoans = loans.filter((l) => l.status !== "PENDING");
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
@@ -99,42 +101,42 @@ const LoanApproval = () => {
 
           {notifications.length > 0 && (
             <div className="bg-card rounded-xl border border-border p-4 space-y-2" style={{ boxShadow: "var(--card-shadow)" }}>
-              <h3 className="text-sm font-bold text-foreground flex items-center gap-2"><Bell className="w-4 h-4 text-primary" />Notifications</h3>
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2"><Bell className="w-4 h-4 text-primary" />Recent Actions</h3>
               {notifications.map((n, i) => (
                 <div key={i} className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">{n}</div>
               ))}
             </div>
           )}
 
+          {/* Pending Loans */}
           <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Amount (LKR)</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loans.map((loan) => (
-                  <TableRow key={loan.id}>
-                    <TableCell className="font-medium text-foreground">{loan.employeeName}</TableCell>
-                    <TableCell className="font-mono">{loan.amount.toLocaleString()}</TableCell>
-                    <TableCell>{loan.repaymentMonths} months</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">{loan.reason}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {statusBadge(loan.status)}
-                        {loan.status === "REJECTED" && loan.rejectReason && (
-                          <p className="text-xs text-destructive mt-1">Reason: {loan.rejectReason}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {loan.status === "PENDING" ? (
+            <div className="px-5 py-3 border-b border-border">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Clock className="w-4 h-4 text-[hsl(var(--warning))]" />
+                Pending Requests ({pendingLoans.length})
+              </h3>
+            </div>
+            {pendingLoans.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground text-sm">No pending loan requests.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Amount (LKR)</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingLoans.map((loan) => (
+                    <TableRow key={loan.id}>
+                      <TableCell className="font-medium text-foreground">{loan.employeeName}</TableCell>
+                      <TableCell className="font-mono">{loan.amount.toLocaleString()}</TableCell>
+                      <TableCell>{loan.repaymentMonths} months</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">{loan.reason}</TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
                           <Button size="sm" className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90" onClick={() => handleApprove(loan.id)}>
                             <CheckCircle className="w-3 h-3 mr-1" />Approve
@@ -143,15 +145,49 @@ const LoanApproval = () => {
                             <XCircle className="w-3 h-3 mr-1" />Reject
                           </Button>
                         </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
+
+          {/* Processed Loans */}
+          {processedLoans.length > 0 && (
+            <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
+              <div className="px-5 py-3 border-b border-border">
+                <h3 className="text-sm font-bold text-foreground">Processed Requests</h3>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Amount (LKR)</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {processedLoans.map((loan) => (
+                    <TableRow key={loan.id}>
+                      <TableCell className="font-medium text-foreground">{loan.employeeName}</TableCell>
+                      <TableCell className="font-mono">{loan.amount.toLocaleString()}</TableCell>
+                      <TableCell>{loan.repaymentMonths} months</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {statusBadge(loan.status)}
+                          {loan.status === "REJECTED" && loan.rejectReason && (
+                            <p className="text-xs text-destructive mt-1">Reason: {loan.rejectReason}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => navigate("/loan-deductions")}>
@@ -161,7 +197,6 @@ const LoanApproval = () => {
         </div>
       </div>
 
-      {/* Reject Reason Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
