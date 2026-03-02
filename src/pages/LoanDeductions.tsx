@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { getApprovedDeductions, deductMonth, decreaseRepaymentMonth, subscribeLoanStore } from "@/stores/loanStore";
+import { getApprovedAdvances, markAdvanceDeducted, subscribeAdvanceStore } from "@/stores/advanceStore";
 import { LoanDeduction } from "@/data/loanData";
-import { ArrowLeft, Minus, DollarSign, CheckCircle2 } from "lucide-react";
+import { ApprovedAdvance } from "@/data/advanceData";
+import { ArrowLeft, Minus, DollarSign, CheckCircle2, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
