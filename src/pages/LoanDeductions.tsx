@@ -98,83 +98,151 @@ const LoanDeductions = () => {
               Advance Deductions ({advances.filter(a => !a.deducted).length})
             </Button>
           </div>
-          ) : (
-            deductions.map((d) => (
-              <div key={d.loanId} className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
-                <div
-                  className="p-5 cursor-pointer hover:bg-muted/30 transition-colors"
-                  onClick={() => setExpandedLoan(expandedLoan === d.loanId ? null : d.loanId)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-foreground">{d.employeeName}</h3>
-                      <p className="text-sm text-muted-foreground">Loan #{d.loanId}</p>
-                    </div>
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-xs">Total</p>
-                        <p className="font-bold font-mono text-foreground">LKR {d.totalAmount.toLocaleString()}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-xs">Monthly</p>
-                        <p className="font-bold font-mono text-primary">LKR {d.monthlyDeduction.toLocaleString()}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-xs">Remaining</p>
-                        <p className="font-bold font-mono text-foreground">{d.remainingMonths} months</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-muted-foreground text-xs">Balance</p>
-                        <p className="font-bold font-mono text-destructive">LKR {d.remainingAmount.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {expandedLoan === d.loanId && (
-                  <div className="border-t border-border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Month</TableHead>
-                          <TableHead>Deduction (LKR)</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {d.schedule.map((s, i) => (
-                          <TableRow key={i}>
-                            <TableCell className="font-medium text-foreground">{s.month}</TableCell>
-                            <TableCell className="font-mono">{s.amount.toLocaleString()}</TableCell>
-                            <TableCell><Badge className={statusColor(s.status)}>{s.status}</Badge></TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    <div className="p-4 border-t border-border flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90"
-                        onClick={() => handleDeductMonth(d.loanId)}
-                        disabled={!d.schedule.some((s) => s.status === "PENDING")}
-                      >
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Deduct This Month
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDecreaseMonth(d.loanId)}
-                        disabled={d.remainingMonths <= 1}
-                      >
-                        <Minus className="w-3 h-3 mr-1" />
-                        Decrease Repayment Month
-                      </Button>
+          {/* Loan Deductions Tab */}
+          {activeTab === "loans" && (
+            <>
+              {deductions.length === 0 ? (
+                <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
+                  <DollarSign className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm">No approved loans for deduction yet.</p>
+                  <p className="text-muted-foreground text-xs mt-1">Approved loans from the Executive Officer will appear here.</p>
+                </div>
+              ) : (
+                deductions.map((d) => (
+                  <div key={d.loanId} className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
+                    <div
+                      className="p-5 cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => setExpandedLoan(expandedLoan === d.loanId ? null : d.loanId)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-bold text-foreground">{d.employeeName}</h3>
+                          <p className="text-sm text-muted-foreground">Loan #{d.loanId}</p>
+                        </div>
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="text-center">
+                            <p className="text-muted-foreground text-xs">Total</p>
+                            <p className="font-bold font-mono text-foreground">LKR {d.totalAmount.toLocaleString()}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground text-xs">Monthly</p>
+                            <p className="font-bold font-mono text-primary">LKR {d.monthlyDeduction.toLocaleString()}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground text-xs">Remaining</p>
+                            <p className="font-bold font-mono text-foreground">{d.remainingMonths} months</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-muted-foreground text-xs">Balance</p>
+                            <p className="font-bold font-mono text-destructive">LKR {d.remainingAmount.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
+                    {expandedLoan === d.loanId && (
+                      <div className="border-t border-border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Month</TableHead>
+                              <TableHead>Deduction (LKR)</TableHead>
+                              <TableHead>Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {d.schedule.map((s, i) => (
+                              <TableRow key={i}>
+                                <TableCell className="font-medium text-foreground">{s.month}</TableCell>
+                                <TableCell className="font-mono">{s.amount.toLocaleString()}</TableCell>
+                                <TableCell><Badge className={statusColor(s.status)}>{s.status}</Badge></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                        <div className="p-4 border-t border-border flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90"
+                            onClick={() => handleDeductMonth(d.loanId)}
+                            disabled={!d.schedule.some((s) => s.status === "PENDING")}
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Deduct This Month
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDecreaseMonth(d.loanId)}
+                            disabled={d.remainingMonths <= 1}
+                          >
+                            <Minus className="w-3 h-3 mr-1" />
+                            Decrease Repayment Month
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))
+                ))
+              )}
+            </>
+          )}
+
+          {/* Advance Deductions Tab */}
+          {activeTab === "advances" && (
+            <>
+              {advances.length === 0 ? (
+                <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
+                  <Banknote className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm">No approved advances for deduction yet.</p>
+                  <p className="text-muted-foreground text-xs mt-1">Approved advances from the Area Manager will appear here.</p>
+                </div>
+              ) : (
+                <div className="bg-card rounded-xl border border-border overflow-hidden" style={{ boxShadow: "var(--card-shadow)" }}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Amount (LKR)</TableHead>
+                        <TableHead>For Month</TableHead>
+                        <TableHead>Approved Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {advances.map((a) => (
+                        <TableRow key={a.advanceId}>
+                          <TableCell className="font-medium text-foreground">{a.employeeName}</TableCell>
+                          <TableCell className="font-mono">{a.amount.toLocaleString()}</TableCell>
+                          <TableCell>{a.forMonth}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(a.approvedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={a.deducted ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]" : "bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"}>
+                              {a.deducted ? "Deducted" : "Pending"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90"
+                              onClick={() => handleAdvanceDeduct(a.advanceId)}
+                              disabled={a.deducted}
+                            >
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              {a.deducted ? "Done" : "Deduct"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
