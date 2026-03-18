@@ -5,7 +5,9 @@ import {
   groupDeductionsByLoan,
   GroupedLoanDeduction,
 } from "@/services/loanDeductionApi";
+import { getApprovedDeductions, deductMonth, subscribeLoanStore } from "@/stores/loanStore";
 import { getApprovedAdvances, markAdvanceDeducted, subscribeAdvanceStore } from "@/stores/advanceStore";
+import { LoanDeduction } from "@/data/loanData";
 import { ApprovedAdvance } from "@/data/advanceData";
 import { ArrowLeft, DollarSign, CheckCircle2, Banknote, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,26 @@ import { useNavigate } from "react-router-dom";
 import { Shield, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
+// Adapter: convert in-memory LoanDeduction to GroupedLoanDeduction format
+function adaptLocalDeductions(local: LoanDeduction[]): GroupedLoanDeduction[] {
+  return local.map((d) => ({
+    loanId: d.loanId,
+    employeeName: d.employeeName,
+    totalAmount: d.totalAmount,
+    repaymentMonths: d.repaymentMonths,
+    monthlyDeduction: d.monthlyDeduction,
+    remainingMonths: d.remainingMonths,
+    paidMonths: d.paidMonths,
+    remainingAmount: d.remainingAmount,
+    schedule: d.schedule.map((s, i) => ({
+      id: -(d.loanId * 100 + i), // negative id to distinguish local
+      month: s.month,
+      amount: s.amount,
+      status: s.status === "UPCOMING" ? "PENDING" as const : s.status,
+    })),
+  }));
+}
+
 const LoanDeductions = () => {
   const navigate = useNavigate();
   const [deductions, setDeductions] = useState<GroupedLoanDeduction[]>([]);
@@ -24,15 +46,19 @@ const LoanDeductions = () => {
   const [activeTab, setActiveTab] = useState<"loans" | "advances">("loans");
   const [loading, setLoading] = useState(true);
   const [payingId, setPayingId] = useState<number | null>(null);
+  const [useBackend, setUseBackend] = useState(true);
   const { theme, setTheme } = useTheme();
 
   const loadDeductions = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await fetchAllDeductions();
       setDeductions(groupDeductionsByLoan(data));
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to load deductions", variant: "destructive" });
+      setUseBackend(true);
+    } catch {
+      // Backend unreachable — fall back to in-memory store
+      setUseBackend(false);
+      setDeductions(adaptLocalDeductions(getApprovedDeductions()));
     } finally {
       setLoading(false);
     }
@@ -42,16 +68,31 @@ const LoanDeductions = () => {
     loadDeductions();
   }, [loadDeductions]);
 
+  // Subscribe to in-memory store changes when in fallback mode
+  useEffect(() => {
+    if (useBackend) return;
+    const unsub = subscribeLoanStore(() => {
+      setDeductions(adaptLocalDeductions(getApprovedDeductions()));
+    });
+    return unsub;
+  }, [useBackend]);
+
   useEffect(() => {
     const unsub = subscribeAdvanceStore(() => setAdvances(getApprovedAdvances()));
     return unsub;
   }, []);
 
   const handleMarkPaid = async (deductionId: number, loanId: number) => {
+    if (!useBackend) {
+      // Fallback: use in-memory store
+      deductMonth(loanId);
+      toast({ title: "Deduction Applied", description: "Monthly deduction has been deducted from salary." });
+      return;
+    }
     try {
       setPayingId(deductionId);
       await markDeductionPaid(deductionId);
-      toast({ title: "Deduction Paid", description: "Monthly deduction marked as paid. Notification sent to employee." });
+      toast({ title: "Deduction Paid", description: "Monthly deduction marked as paid." });
       await loadDeductions();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to mark as paid", variant: "destructive" });
@@ -74,10 +115,13 @@ const LoanDeductions = () => {
   };
 
   const formatMonth = (month: string) => {
-    // Convert "2026-04" to "Apr 2026"
-    const [year, m] = month.split("-");
-    const date = new Date(Number(year), Number(m) - 1);
-    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    // Handle both "2026-04" and "Apr 2026" formats
+    if (month.match(/^\d{4}-\d{2}$/)) {
+      const [year, m] = month.split("-");
+      const date = new Date(Number(year), Number(m) - 1);
+      return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    }
+    return month;
   };
 
   return (
@@ -92,6 +136,9 @@ const LoanDeductions = () => {
           </span>
         </div>
         <span className="text-sm font-medium text-muted-foreground ml-2">Account Executive Portal</span>
+        {!useBackend && (
+          <Badge className="bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))] text-xs ml-2">Offline Mode</Badge>
+        )}
         <div className="ml-auto">
           <button className="p-2 rounded-lg hover:bg-muted transition-colors" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? <Sun className="w-4 h-4 text-muted-foreground" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
@@ -139,7 +186,7 @@ const LoanDeductions = () => {
               {loading ? (
                 <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
                   <Loader2 className="w-8 h-8 text-primary mx-auto mb-3 animate-spin" />
-                  <p className="text-muted-foreground text-sm">Loading deductions from server...</p>
+                  <p className="text-muted-foreground text-sm">Loading deductions...</p>
                 </div>
               ) : deductions.length === 0 ? (
                 <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
