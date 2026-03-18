@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
-import { getApprovedDeductions, deductMonth, decreaseRepaymentMonth, subscribeLoanStore } from "@/stores/loanStore";
+import { useState, useEffect, useCallback } from "react";
+import {
+  fetchAllDeductions,
+  markDeductionPaid,
+  groupDeductionsByLoan,
+  GroupedLoanDeduction,
+} from "@/services/loanDeductionApi";
 import { getApprovedAdvances, markAdvanceDeducted, subscribeAdvanceStore } from "@/stores/advanceStore";
-import { LoanDeduction } from "@/data/loanData";
 import { ApprovedAdvance } from "@/data/advanceData";
-import { ArrowLeft, Minus, DollarSign, CheckCircle2, Banknote } from "lucide-react";
+import { ArrowLeft, DollarSign, CheckCircle2, Banknote, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,31 +18,51 @@ import { useTheme } from "@/components/ThemeProvider";
 
 const LoanDeductions = () => {
   const navigate = useNavigate();
-  const [deductions, setDeductions] = useState<LoanDeduction[]>(getApprovedDeductions());
+  const [deductions, setDeductions] = useState<GroupedLoanDeduction[]>([]);
   const [advances, setAdvances] = useState<ApprovedAdvance[]>(getApprovedAdvances());
   const [expandedLoan, setExpandedLoan] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"loans" | "advances">("loans");
+  const [loading, setLoading] = useState(true);
+  const [payingId, setPayingId] = useState<number | null>(null);
   const { theme, setTheme } = useTheme();
 
-  useEffect(() => {
-    const unsub1 = subscribeLoanStore(() => setDeductions(getApprovedDeductions()));
-    const unsub2 = subscribeAdvanceStore(() => setAdvances(getApprovedAdvances()));
-    return () => { unsub1(); unsub2(); };
+  const loadDeductions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAllDeductions();
+      setDeductions(groupDeductionsByLoan(data));
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to load deductions", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleDeductMonth = (loanId: number) => {
-    deductMonth(loanId);
-    toast({ title: "Deduction Applied", description: "Monthly deduction has been deducted from salary. Notification sent to employee." });
-  };
+  useEffect(() => {
+    loadDeductions();
+  }, [loadDeductions]);
 
-  const handleDecreaseMonth = (loanId: number) => {
-    decreaseRepaymentMonth(loanId);
-    toast({ title: "Repayment Updated", description: "Decreased repayment period by 1 month. Monthly deduction increased equally." });
+  useEffect(() => {
+    const unsub = subscribeAdvanceStore(() => setAdvances(getApprovedAdvances()));
+    return unsub;
+  }, []);
+
+  const handleMarkPaid = async (deductionId: number, loanId: number) => {
+    try {
+      setPayingId(deductionId);
+      await markDeductionPaid(deductionId);
+      toast({ title: "Deduction Paid", description: "Monthly deduction marked as paid. Notification sent to employee." });
+      await loadDeductions();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to mark as paid", variant: "destructive" });
+    } finally {
+      setPayingId(null);
+    }
   };
 
   const handleAdvanceDeduct = (advanceId: number) => {
     markAdvanceDeducted(advanceId);
-    toast({ title: "Advance Deducted", description: "Advance has been deducted from salary. Notification sent to employee." });
+    toast({ title: "Advance Deducted", description: "Advance has been deducted from salary." });
   };
 
   const statusColor = (status: string) => {
@@ -47,6 +71,13 @@ const LoanDeductions = () => {
       case "PENDING": return "bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]";
       default: return "bg-muted text-muted-foreground";
     }
+  };
+
+  const formatMonth = (month: string) => {
+    // Convert "2026-04" to "Apr 2026"
+    const [year, m] = month.split("-");
+    const date = new Date(Number(year), Number(m) - 1);
+    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   };
 
   return (
@@ -77,6 +108,9 @@ const LoanDeductions = () => {
               <DollarSign className="w-5 h-5 text-primary" />
               Deductions — Account Executive
             </h1>
+            <Button variant="ghost" size="icon" onClick={loadDeductions} className="ml-auto" disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </Button>
           </div>
 
           {/* Tabs */}
@@ -102,7 +136,12 @@ const LoanDeductions = () => {
           {/* Loan Deductions Tab */}
           {activeTab === "loans" && (
             <>
-              {deductions.length === 0 ? (
+              {loading ? (
+                <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
+                  <Loader2 className="w-8 h-8 text-primary mx-auto mb-3 animate-spin" />
+                  <p className="text-muted-foreground text-sm">Loading deductions from server...</p>
+                </div>
+              ) : deductions.length === 0 ? (
                 <div className="bg-card rounded-xl border border-border p-12 text-center" style={{ boxShadow: "var(--card-shadow)" }}>
                   <DollarSign className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground text-sm">No approved loans for deduction yet.</p>
@@ -115,7 +154,7 @@ const LoanDeductions = () => {
                       className="p-5 cursor-pointer hover:bg-muted/30 transition-colors"
                       onClick={() => setExpandedLoan(expandedLoan === d.loanId ? null : d.loanId)}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
                           <h3 className="font-bold text-foreground">{d.employeeName}</h3>
                           <p className="text-sm text-muted-foreground">Loan #{d.loanId}</p>
@@ -149,38 +188,39 @@ const LoanDeductions = () => {
                               <TableHead>Month</TableHead>
                               <TableHead>Deduction (LKR)</TableHead>
                               <TableHead>Status</TableHead>
+                              <TableHead className="text-right">Action</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {d.schedule.map((s, i) => (
-                              <TableRow key={i}>
-                                <TableCell className="font-medium text-foreground">{s.month}</TableCell>
+                            {d.schedule.map((s) => (
+                              <TableRow key={s.id}>
+                                <TableCell className="font-medium text-foreground">{formatMonth(s.month)}</TableCell>
                                 <TableCell className="font-mono">{s.amount.toLocaleString()}</TableCell>
                                 <TableCell><Badge className={statusColor(s.status)}>{s.status}</Badge></TableCell>
+                                <TableCell className="text-right">
+                                  {s.status === "PENDING" && (
+                                    <Button
+                                      size="sm"
+                                      className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90"
+                                      onClick={(e) => { e.stopPropagation(); handleMarkPaid(s.id, d.loanId); }}
+                                      disabled={payingId === s.id}
+                                    >
+                                      {payingId === s.id ? (
+                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                      ) : (
+                                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                                      )}
+                                      Mark Paid
+                                    </Button>
+                                  )}
+                                  {s.status === "PAID" && (
+                                    <span className="text-xs text-muted-foreground">Completed</span>
+                                  )}
+                                </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
                         </Table>
-                        <div className="p-4 border-t border-border flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-[hsl(var(--success))] text-white hover:bg-[hsl(var(--success))]/90"
-                            onClick={() => handleDeductMonth(d.loanId)}
-                            disabled={!d.schedule.some((s) => s.status === "PENDING")}
-                          >
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Deduct This Month
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDecreaseMonth(d.loanId)}
-                            disabled={d.remainingMonths <= 1}
-                          >
-                            <Minus className="w-3 h-3 mr-1" />
-                            Decrease Repayment Month
-                          </Button>
-                        </div>
                       </div>
                     )}
                   </div>
