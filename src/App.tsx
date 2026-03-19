@@ -16,6 +16,7 @@ import LoanApproval from "./pages/LoanApproval";
 import LoanDeductions from "./pages/LoanDeductions";
 import AdvanceApproval from "./pages/AdvanceApproval";
 import VerifyEmployee from "./pages/VerifyEmployee";
+import PayrollGenerate from "./pages/PayrollGenerate";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
