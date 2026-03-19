@@ -42,6 +42,7 @@ const App = () => (
             <Route path="/loan-deductions" element={<LoanDeductions />} />
             <Route path="/advance-approval" element={<AdvanceApproval />} />
             <Route path="/verify" element={<VerifyEmployee />} />
+            <Route path="/payroll" element={<PayrollGenerate />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
