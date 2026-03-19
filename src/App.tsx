@@ -16,6 +16,7 @@ import LoanApproval from "./pages/LoanApproval";
 import LoanDeductions from "./pages/LoanDeductions";
 import AdvanceApproval from "./pages/AdvanceApproval";
 import VerifyEmployee from "./pages/VerifyEmployee";
+import PayrollGenerate from "./pages/PayrollGenerate";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/loan-deductions" element={<LoanDeductions />} />
             <Route path="/advance-approval" element={<AdvanceApproval />} />
             <Route path="/verify" element={<VerifyEmployee />} />
+            <Route path="/payroll" element={<PayrollGenerate />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
